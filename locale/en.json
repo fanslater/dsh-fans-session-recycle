@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "fans Session Recycle Bin",
+    "description": "Adds Delete session to an archived Session's context menu. The row is hidden from its workspace and moved into the sidebar Recycle Bin, and the record survives a restart. Recycle entries cannot be opened; a collapsible history summary appears under each title. Right-click offers Restore session (returns to the original workspace and stays archived) or Permanently delete. Permanent delete uses a floating confirmation card without a backdrop and clears the session log, projection cache, workspace account/archive, related schedules, Synapse mappings, workspace backup references, and the sorting plugin/Session Overview local state. Shared attachments, DSH logs/telemetry, and external memories are out of scope.",
+    "detail": "README.md"
+  }
+}

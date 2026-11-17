@@ -1,0 +1,4 @@
+# dsh-fans-session-recycle bundle declaration.
+- insert:
+    - id: dsh-fans-session-recycle
+      name: dsh-fans-session-recycle
