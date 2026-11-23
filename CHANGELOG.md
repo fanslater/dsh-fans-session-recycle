@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.6] — 2026-11-23
+
+- Fixed a Session disappearing from both the workspace and the Recycle Bin: a
+  row was hidden purely because a recycle record existed, so unarchiving a
+  Session outside the plugin left it invisible once `autoPrune` was off (the
+  record then survives, while the Recycle Bin only lists archived Sessions).
+  Hiding now requires the Session to still be archived; the record itself is
+  untouched and is pruned only when autoPrune is on. Before the workspace
+  snapshot reports `phase: ready` the old record-only rule is kept, so a restart
+  cannot flash recycled rows.
+- Corrected stale plugin names in both READMEs: the neighbour is now
+  `dsh-fans-session-monitor` (the former `dsh-plugin-busy-workspace`), and the
+  response-excerpt item documents the configurable 0–3 instead of a fixed 3.
+
 ## [1.0.5] — 2026-11-23
 
 - Fixed the plugin detail page showing **插件声明的详细介绍文件无效**: after the

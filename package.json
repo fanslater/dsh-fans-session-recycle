@@ -1,6 +1,6 @@
 {
   "name": "dsh-fans-session-recycle",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "为 DSH 归档会话提供删除到回收站、历史摘要、还原和彻底删除；彻底删除会清理会话日志、投影缓存、工作区账户/归档、关联定时任务、Synapse 映射、工作区备份引用和本地状态。",
   "type": "module",
   "license": "MIT",

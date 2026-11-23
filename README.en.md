@@ -19,10 +19,15 @@ A first-class sidebar entry lists the moved archived Sessions.
 
 - Entries cannot be opened by click or double-click.
 - The summary is folded to one line by default; **Expand summary** shows the
-  full first task, process prompts, the most recent prompt, the latest three
-  assistant response excerpts, and the turn/last-activity footer.
+  full first task, process prompts, the most recent prompt, the latest N
+  assistant response excerpts (default 3, configurable 0–3), and the
+  turn/last-activity footer.
 - Summaries come from the Host session projection cache through a
   token-protected local route.
+- Hiding only applies to Sessions that are **still archived**: unarchiving one
+  in DSH brings its row straight back to the original workspace, even when
+  autoPrune is off and the record survives — it can never end up invisible in
+  both the workspace and the Recycle Bin.
 
 ## Restore
 
@@ -78,8 +83,8 @@ next paint pass (≤1.5 s).
 
 Install the directory with a `link:` dependency and enable
 `dsh-fans-session-recycle` in the bundle. It is independent of
-`dsh-plugin-busy-workspace` (sorting, highlighting, selection) and either can be
-enabled alone.
+`dsh-fans-session-monitor` (sorting, highlighting, selection, Session Overview)
+and either can be enabled alone.
 
 ## Verification
 

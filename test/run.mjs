@@ -126,6 +126,16 @@ assert.equal(t.trimToMaxEntries(), false, "a second trim must be a no-op");
 // The trim must also be wired to the settings store so a save alone applies it.
 assert.ok(clientSource.includes("const offSettings = subscribeSettings("), "settings subscription must exist");
 assert.ok(clientSource.includes("trimToMaxEntries()"), "the subscription must call trimToMaxEntries");
+
+// A recycled row is hidden only while its Session is still archived. When the
+// user unarchives a Session outside the plugin the row must come back, otherwise
+// turning autoPrune off (which keeps the record) would hide that Session forever.
+const records = { "session-a": { deletedAt: 1 } };
+assert.equal(t.shouldHideRecycled("session-a", records, new Set(["session-a"]), true, new Set()), true);
+assert.equal(t.shouldHideRecycled("session-a", records, new Set(), true, new Set()), false, "unarchived Session must reappear");
+assert.equal(t.shouldHideRecycled("session-a", records, new Set(), false, new Set()), true, "before the archive set is ready, keep hiding");
+assert.equal(t.shouldHideRecycled("session-b", records, new Set(["session-a"]), true, new Set()), false, "no record means no hiding");
+assert.equal(t.shouldHideRecycled("session-a", records, new Set(), true, new Set(["session-a"])), true, "purged ids stay hidden");
 // Restore the panel fixture after the eviction test.
 t.saveSettings({ summaryCollapsed: true, maxEntries: 200 });
 if (!t.isRecycled("session-b")) t.recycleAdd("session-b");
