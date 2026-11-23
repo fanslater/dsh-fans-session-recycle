@@ -136,6 +136,96 @@ assert.equal(t.shouldHideRecycled("session-a", records, new Set(), true, new Set
 assert.equal(t.shouldHideRecycled("session-a", records, new Set(), false, new Set()), true, "before the archive set is ready, keep hiding");
 assert.equal(t.shouldHideRecycled("session-b", records, new Set(["session-a"]), true, new Set()), false, "no record means no hiding");
 assert.equal(t.shouldHideRecycled("session-a", records, new Set(), true, new Set(["session-a"])), true, "purged ids stay hidden");
+
+// DSH counts every mounted row for its "show more" watermark, so hiding rows by
+// CSS leaves a dead 「展开其余 N 个会话」 control. It must be suppressed when no
+// further visible row remains, and kept whenever expanding would reveal one.
+assert.equal(t.overflowIsDead(0, 0, false), true, "all rows hidden: the control is dead");
+assert.equal(t.overflowIsDead(5, 5, false), true, "nothing left to reveal: dead");
+assert.equal(t.overflowIsDead(6, 5, false), false, "one more visible row: keep");
+assert.equal(t.overflowIsDead(5, 4, false), false, "one more visible row: keep");
+assert.equal(t.overflowIsDead(0, 0, true), false, "expanded group keeps its collapse control");
+assert.equal(t.overflowIsDead(6, 6, true), false, "expanded group keeps its collapse control");
+
+// The guard must be wired into paint() and styled, otherwise it never runs.
+assert.ok(clientSource.includes("applyOverflowGuard("), "paint must call applyOverflowGuard");
+assert.ok(clientSource.includes("data-session-recycle-dead"), "the dead-overflow attribute/rule must exist");
+
+// DOM contract: a workspace whose sessions are all recycled must lose the
+//「展开其余 N 个会话」control, while a workspace that still has a revealable
+// row keeps it. Uses a tiny DOM stub through the module's sandbox document.
+function makeRow(id, recycled) {
+  const attrs = { "data-row-key": `session:${id}` };
+  if (recycled) attrs["data-session-recycle"] = "true";
+  return {
+    getAttribute(n) { return attrs[n] ?? null; },
+    setAttribute(n, v) { attrs[n] = String(v); },
+    removeAttribute(n) { delete attrs[n]; },
+  };
+}
+function makeGroup(workspaceId, rows, expanded) {
+  const overflow = {
+    attrs: { "data-row-key": `overflow:${workspaceId}`, "aria-expanded": expanded ? "true" : "false" },
+    getAttribute(n) { return this.attrs[n] ?? null; },
+    setAttribute(n, v) { this.attrs[n] = String(v); },
+    removeAttribute(n) { delete this.attrs[n]; },
+  };
+  const header = {
+    getAttribute(n) { return n === "data-row-key" ? `workspace:${workspaceId}` : null; },
+  };
+  return {
+    overflow,
+    querySelector(selector) {
+      if (selector.includes("overflow:")) return overflow;
+      if (selector.includes("workspace:")) return header;
+      return null;
+    },
+    querySelectorAll() { return rows; },
+  };
+}
+
+const sessionsById = {};
+const ids = [];
+for (let i = 1; i <= 6; i += 1) {
+  const id = `s${i}`;
+  ids.push(id);
+  sessionsById[id] = { id, blank: false };
+}
+const workspaceSnapshot = {
+  phase: "ready",
+  items: [{ workspaceId: "w1", title: "检查代码", path: "/x", sessionIds: ids }],
+  archivedSessionIds: ids,
+};
+
+// 场景 A：6 个会话全部在回收站，水位只挂载 5 行 —— 按钮应被判为死按钮。
+const allRecycled = {};
+for (const id of ids) allRecycled[id] = { deletedAt: 1 };
+const groupA = makeGroup("w1", ids.slice(0, 5).map((id) => makeRow(id, true)), false);
+let groupSections = [groupA];
+sandbox.document.querySelectorAll = (selector) => (selector.includes("_groupSection") ? groupSections : []);
+t.applyOverflowGuard(allRecycled, new Set(ids), true, sessionsById, workspaceSnapshot);
+assert.equal(groupA.overflow.getAttribute("data-session-recycle-dead"), "true", "all-recycled group hides the dead control");
+
+// 场景 B：只有第 6 个（尚未挂载）在回收站 —— 也没有可展开的可见行，仍应隐藏。
+const lastRecycled = { s6: { deletedAt: 1 } };
+const groupB = makeGroup("w1", ids.slice(0, 5).map((id) => makeRow(id, false)), false);
+groupSections = [groupB];
+t.applyOverflowGuard(lastRecycled, new Set(ids), true, sessionsById, workspaceSnapshot);
+assert.equal(groupB.overflow.getAttribute("data-session-recycle-dead"), "true", "hidden-only remainder hides the control");
+
+// 场景 C：没有回收站记录 —— 展开确实能露出第 6 条，必须保留按钮。
+const groupC = makeGroup("w1", ids.slice(0, 5).map((id) => makeRow(id, false)), false);
+groupSections = [groupC];
+t.applyOverflowGuard({}, new Set(ids), true, sessionsById, workspaceSnapshot);
+assert.equal(groupC.overflow.getAttribute("data-session-recycle-dead"), "false", "revealable row keeps the control");
+
+// 场景 D：已展开（aria-expanded=true）—— 保留「收起」。
+const groupD = makeGroup("w1", ids.map((id) => makeRow(id, true)), true);
+groupSections = [groupD];
+t.applyOverflowGuard(allRecycled, new Set(ids), true, sessionsById, workspaceSnapshot);
+assert.equal(groupD.overflow.getAttribute("data-session-recycle-dead"), "false", "expanded group keeps its collapse control");
+
+sandbox.document.querySelectorAll = () => [];
 // Restore the panel fixture after the eviction test.
 t.saveSettings({ summaryCollapsed: true, maxEntries: 200 });
 if (!t.isRecycled("session-b")) t.recycleAdd("session-b");

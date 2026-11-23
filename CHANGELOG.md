@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.7] — 2026-11-23
+
+- Fixed a dead 「展开其余 N 个会话」 control. DSH derives that button from the
+  group's Session count (`hiddenCount = sessions.length - rows.length`) and knows
+  nothing about the rows this plugin hides with `display: none`, so a workspace
+  whose Sessions were all in the Recycle Bin still showed the button; clicking it
+  only flipped the label to 收起 while nothing appeared. `paint()` now marks each
+  group's overflow control and hides it when no visible row is left to reveal
+  (`visibleTotal <= mountedVisible`), keeps it whenever expanding would actually
+  show one, and always keeps the collapse control once the group is expanded
+  (read from DSH's own `aria-expanded`).
+- Added `overflowIsDead()` plus four DOM-contract cases (all recycled, only the
+  unmounted remainder recycled, a revealable row, expanded group).
+
 ## [1.0.6] — 2026-11-23
 
 - Fixed a Session disappearing from both the workspace and the Recycle Bin: a

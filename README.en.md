@@ -28,6 +28,10 @@ A first-class sidebar entry lists the moved archived Sessions.
   in DSH brings its row straight back to the original workspace, even when
   autoPrune is off and the record survives — it can never end up invisible in
   both the workspace and the Recycle Bin.
+- When **every** Session of a workspace sits in the Recycle Bin, DSH still draws
+  「展开其余 N 个会话」 from `session count − watermark`. The plugin hides that
+  dead control (clicking it changed nothing but the label); it is kept whenever a
+  revealable row exists, and the collapse control always stays once expanded.
 
 ## Restore
 
