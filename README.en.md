@@ -61,7 +61,7 @@ record is migrated to
 Registered only at `plugins.bundle.config` (key = package name), never in DSH
 Settings:
 
-- **Summary**: collapsed by default, process prompts (0–6), response excerpts
+- **Summary**: collapsed by default, process prompts (0–5), response excerpts
   (0–3);
 - **Recycle Bin**: maximum entries (10–1000), prune invalid records on startup;
 - **Fixed safety behaviour**: archived Sessions only, restore keeps archived,
@@ -70,6 +70,11 @@ Settings:
 
 Fields: `summaryCollapsed`, `summaryPrompts`, `summaryResponses`, `maxEntries`,
 `autoPrune`.
+
+Every option takes effect as soon as **Save configuration** is pressed — no page
+refresh and no restart: the summary options apply to the next panel render,
+`maxEntries` trims the stored records at save time, and `autoPrune` joins the
+next paint pass (≤1.5 s).
 
 Install the directory with a `link:` dependency and enable
 `dsh-fans-session-recycle` in the bundle. It is independent of

@@ -77,7 +77,7 @@ assert.equal(t.isRecycled("session-b"), true);
 
 // Config defaults, clamping, persistence, and the config page.
 assert.equal(t.mergeSettings({}).summaryCollapsed, true);
-assert.equal(t.mergeSettings({ summaryPrompts: 99 }).summaryPrompts, 6);
+assert.equal(t.mergeSettings({ summaryPrompts: 99 }).summaryPrompts, 5);
 assert.equal(t.mergeSettings({ summaryResponses: -1 }).summaryResponses, 0);
 assert.equal(t.mergeSettings({ maxEntries: 1 }).maxEntries, 10);
 t.saveSettings({ summaryCollapsed: false, maxEntries: 10 });
@@ -110,6 +110,22 @@ const capped = t.getRecycleState();
 assert.ok(Object.keys(capped.sessions).length <= 10);
 assert.ok(capped.sessions["session-extra-11"] !== undefined);
 assert.ok(capped.sessions["session-extra-0"] === undefined);
+
+// Saving a smaller maxEntries must trim immediately, without waiting for the
+// recycle panel to mount (the user is on the plugin detail page when saving).
+t.saveSettings({ maxEntries: 200 });
+for (let i = 20; i < 35; i += 1) t.recycleAdd(`session-trim-${i}`);
+assert.ok(Object.keys(t.getRecycleState().sessions).length > 10);
+t.saveSettings({ maxEntries: 10 });
+assert.equal(t.trimToMaxEntries(), true);
+assert.ok(Object.keys(t.getRecycleState().sessions).length <= 10);
+assert.ok(t.getRecycleState().sessions["session-trim-34"] !== undefined);
+assert.ok(t.getRecycleState().sessions["session-trim-20"] === undefined);
+assert.equal(t.trimToMaxEntries(), false, "a second trim must be a no-op");
+
+// The trim must also be wired to the settings store so a save alone applies it.
+assert.ok(clientSource.includes("const offSettings = subscribeSettings("), "settings subscription must exist");
+assert.ok(clientSource.includes("trimToMaxEntries()"), "the subscription must call trimToMaxEntries");
 // Restore the panel fixture after the eviction test.
 t.saveSettings({ summaryCollapsed: true, maxEntries: 200 });
 if (!t.isRecycled("session-b")) t.recycleAdd("session-b");
